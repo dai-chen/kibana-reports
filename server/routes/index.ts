@@ -16,10 +16,14 @@
 import registerReportRoute from './report';
 import registerReportDefinitionRoute from './reportDefinition';
 import dashboardRoute from './getDashboards';
+import visualizationRoute from './getVisualizations';
+import savedSearchRoute from './getSavedSearch';
 import { IRouter } from '../../../../src/core/server';
 
 export default function (router: IRouter) {
   registerReportRoute(router);
   registerReportDefinitionRoute(router);
   dashboardRoute(router);
+  visualizationRoute(router);
+  savedSearchRoute(router);
 }
