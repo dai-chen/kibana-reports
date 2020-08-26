@@ -57,6 +57,7 @@ export function CreateReport(props) {
   };
 
   const createNewReportDefinition = async (metadata) => {
+    console.log("metadata is", metadata);
     const { httpClient } = props;
     httpClient
       .post('../api/reporting/reportDefinition', {

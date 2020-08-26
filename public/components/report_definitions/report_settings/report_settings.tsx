@@ -186,6 +186,8 @@ export function ReportSettings(props) {
       createReportDefinitionRequest['report_source'] = 'Dashboard';
     } else if (e === 'visualizationReportSource') {
       createReportDefinitionRequest['report_source'] = 'Visualization';
+    } else if (e === 'savedSearchReportSource') {
+      createReportDefinitionRequest['report_source'] = 'Saved search';
     }
   };
 
@@ -220,6 +222,14 @@ export function ReportSettings(props) {
 
   const handleSavedSearchFileFormat = (e: React.SetStateAction<string>) => {
     setSavedSearchFileFormat(e);
+    if (e === 'csvFormat') {
+      createReportDefinitionRequest['report_params']['report_format'] = 'csv';
+      console.log("sup bro");
+    }
+    else if (e === 'xlsFormat') {
+      createReportDefinitionRequest['report_params']['report_format'] = 'xls';
+      console.log("xls format changed");
+    }
   };
 
   const handleIncludeHeader = (e: {

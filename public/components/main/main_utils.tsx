@@ -112,6 +112,14 @@ export const readStreamToFile = async (
 };
 
 export const generateReport = async (metadata, httpClient) => {
+  console.log("metadata is", metadata);
+  if (metadata.report_source === 'Dashboard' || metadata.report_source === 'Visualization') {
+    console.log("dashboard and visualization block entered");
+  }
+  else if (metadata.report_source === 'Saved search') {
+    console.log("saved search block");
+  }
+  return;
   await httpClient
     .post('../api/reporting/generateReport', {
       body: JSON.stringify(metadata),
