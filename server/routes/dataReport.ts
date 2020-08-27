@@ -129,14 +129,6 @@ export default function (router: IRouter) {
               rows = nbRows;
               nbScroll = Math.floor(nbRows / default_max_size);
             }
-            // let data = {
-            //   esData,
-            //   rows,
-            //   nbScroll,
-            //   fetch_size,
-            //   report,
-            //   reqBody,
-            // };
 
             for (let i = 0; i < nbScroll - 1; i++) {
               let resScroll = await context.core.elasticsearch.adminClient.callAsInternalUser(
@@ -292,7 +284,6 @@ export default function (router: IRouter) {
 
         //Get data
         dataset.push(getEsData(arrayHits, report));
-
         //Convert To csv
         const csv = await convertToCSV(dataset);
 

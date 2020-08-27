@@ -182,10 +182,10 @@ export const getEsData = (arrayHits, report) => {
 export const convertToCSV = async (dataset) => {
   let convertedData: any = [];
   const options = {
-    delimiter: { field: ',' },
+    delimiter: { field: ',', eol: '\n' },
     emptyFieldValue: ' ',
   };
-  await converter.json2csvAsync(dataset, options).then((csv) => {
+  await converter.json2csvAsync(dataset[0], options).then((csv) => {
     convertedData = csv;
   });
   return convertedData;

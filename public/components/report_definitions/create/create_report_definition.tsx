@@ -57,7 +57,6 @@ export function CreateReport(props) {
   };
 
   const createNewReportDefinition = async (metadata) => {
-    console.log("metadata is", metadata);
     const { httpClient } = props;
     httpClient
       .post('../api/reporting/reportDefinition', {
@@ -67,21 +66,42 @@ export function CreateReport(props) {
         },
       })
       .then(async (resp) => {
-        if (metadata['trigger']['trigger_params']['schedule_type'] === 'Now') {
-          let onDemandDownloadMetadata = {
+        let onDemandDownloadMetadata = {};
+        if (
+          metadata['report_source'] === 'Dashboard' ||
+          metadata['report_source'] === 'Visualization'
+        ) {
+          if (
+            metadata['trigger']['trigger_params']['schedule_type'] === 'Now'
+          ) {
+            onDemandDownloadMetadata = {
+              report_name: metadata['report_name'],
+              report_source: metadata['report_source'],
+              report_type: metadata['report_type'],
+              description: metadata['description'],
+              report_params: {
+                url: metadata['report_params']['url'],
+                window_width: 1440,
+                window_height: 2560,
+                report_format: metadata['report_params']['report_format'],
+              },
+            };
+          }
+        } else if (metadata['report_source'] === 'Saved search') {
+          onDemandDownloadMetadata = {
             report_name: metadata['report_name'],
             report_source: metadata['report_source'],
             report_type: metadata['report_type'],
             description: metadata['description'],
             report_params: {
-              url: metadata['report_params']['url'],
-              window_width: 1440,
-              window_height: 2560,
+              saved_search_id: metadata['report_params']['saved_search_id'],
+              start: metadata['report_params']['start'],
+              end: metadata['report_params']['end'],
               report_format: metadata['report_params']['report_format'],
             },
           };
-          generateReport(onDemandDownloadMetadata, httpClient);
         }
+        generateReport(onDemandDownloadMetadata, httpClient);
         window.location.assign(`opendistro_kibana_reports#/`);
       })
       .catch((error) => {

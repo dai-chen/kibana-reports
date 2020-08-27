@@ -138,6 +138,21 @@ function TimeRangeSelect() {
   );
 }
 
+let visualReportParams = {
+  url: '',
+  window_width: 1440,
+  window_height: 2560,
+  report_format: '',
+};
+
+// todo: replace this once get saved search merged in
+let dataReportParams = {
+  saved_search_id: '571aaf70-4c88-11e8-b3d7-01146121b73d',
+  start: '1343576635300',
+  end: '1598477123000',
+  report_format: '',
+};
+
 export function ReportSettings(props) {
   const { createReportDefinitionRequest, httpClientProps } = props;
 
@@ -156,9 +171,6 @@ export function ReportSettings(props) {
   );
   const [fileFormat, setFileFormat] = useState('pdfFormat');
 
-  const [savedSearchFileFormat, setSavedSearchFileFormat] = useState(
-    'csvFormat'
-  );
   const [includeHeader, setIncludeHeader] = useState(false);
   const [includeFooter, setIncludeFooter] = useState(false);
 
@@ -184,10 +196,20 @@ export function ReportSettings(props) {
     setReportSourceId(e);
     if (e === 'dashboardReportSource') {
       createReportDefinitionRequest['report_source'] = 'Dashboard';
+      if (reportSourceId === 'savedSearchReportSource') {
+        handleFileFormat('pdfFormat');
+        createReportDefinitionRequest['report_params'] = visualReportParams;
+      }
     } else if (e === 'visualizationReportSource') {
       createReportDefinitionRequest['report_source'] = 'Visualization';
+      if (reportSourceId === 'savedSearchReportSource') {
+        handleFileFormat('pdfFormat');
+        createReportDefinitionRequest['report_params'] = visualReportParams;
+      }
     } else if (e === 'savedSearchReportSource') {
       createReportDefinitionRequest['report_source'] = 'Saved search';
+      handleFileFormat('csvFormat');
+      createReportDefinitionRequest['report_params'] = dataReportParams;
     }
   };
 
@@ -195,8 +217,9 @@ export function ReportSettings(props) {
     target: { value: React.SetStateAction<string> };
   }) => {
     setDashboardSourceSelect(e.target.value);
-    createReportDefinitionRequest['report_params']['url'] = 
+    createReportDefinitionRequest['report_params']['url'] =
       getDashboardBaseUrl() + e.target.value;
+    visualReportParams['url'] = getDashboardBaseUrl() + e.target.value;
   };
 
   const handleVisualizationSelect = (e: {
@@ -209,26 +232,23 @@ export function ReportSettings(props) {
     target: { value: React.SetStateAction<string> };
   }) => {
     setSavedSearchSourceSelect(e.target.value);
+    dataReportParams['saved_search_id'] = e.target.value.toString();
   };
 
   const handleFileFormat = (e: React.SetStateAction<string>) => {
     setFileFormat(e);
     if (e === 'pdfFormat') {
       createReportDefinitionRequest['report_params']['report_format'] = 'pdf';
+      visualReportParams['report_format'] = 'pdf';
     } else if (e === 'pngFormat') {
       createReportDefinitionRequest['report_params']['report_format'] = 'png';
-    }
-  };
-
-  const handleSavedSearchFileFormat = (e: React.SetStateAction<string>) => {
-    setSavedSearchFileFormat(e);
-    if (e === 'csvFormat') {
+      visualReportParams['report_format'] = 'png';
+    } else if (e === 'csvFormat') {
       createReportDefinitionRequest['report_params']['report_format'] = 'csv';
-      console.log("sup bro");
-    }
-    else if (e === 'xlsFormat') {
-      createReportDefinitionRequest['report_params']['report_format'] = 'xls';
-      console.log("xls format changed");
+      dataReportParams['report_format'] = 'csv';
+    } else if (e === 'xlsFormat') {
+      createReportDefinitionRequest['report_params']['report_format'] = 'xlsx';
+      dataReportParams['report_format'] = 'xlsx';
     }
   };
 
@@ -368,8 +388,8 @@ export function ReportSettings(props) {
         <EuiFormRow label="File format">
           <EuiRadioGroup
             options={SAVED_SEARCH_FORMAT_OPTIONS}
-            idSelected={savedSearchFileFormat}
-            onChange={handleSavedSearchFileFormat}
+            idSelected={fileFormat}
+            onChange={handleFileFormat}
           />
         </EuiFormRow>
       </div>
@@ -408,7 +428,15 @@ export function ReportSettings(props) {
     let baseUrl = window.location.href;
     return baseUrl.replace(
       'opendistro_kibana_reports#/create',
-      'dashboards#/view/'
+      'kibana#/dashboard/'
+    );
+  };
+
+  const getSavedSearchBaseUrl = () => {
+    let baseUrl = window.location.href;
+    return baseUrl.replace(
+      'opendistro_kibana_reports#/create',
+      'kibana#/discover/'
     );
   };
 
@@ -422,7 +450,10 @@ export function ReportSettings(props) {
         await handleDashboards(dashboardOptions);
         await setDashboardSourceSelect(dashboardOptions[0].value);
         createReportDefinitionRequest['report_params']['url'] =
-          getDashboardBaseUrl() + response['hits']['hits'][0]['_id'].substring(10);
+          getDashboardBaseUrl() +
+          response['hits']['hits'][0]['_id'].substring(10);
+        visualReportParams['url'] =
+          createReportDefinitionRequest['report_params']['url'];
       })
       .catch((error) => {
         console.log('error when fetching dashboards:', error);

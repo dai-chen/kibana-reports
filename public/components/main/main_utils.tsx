@@ -111,29 +111,60 @@ export const readStreamToFile = async (
   document.body.removeChild(link);
 };
 
+const dataReportToFile = async (format: string, response: any) => {
+  const fileName = 'test_create_data_report.' + format; // todo: sub with filename variable after refactor
+  const blob = new Blob(['\ufeff', response['csv']]);
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 export const generateReport = async (metadata, httpClient) => {
-  console.log("metadata is", metadata);
-  if (metadata.report_source === 'Dashboard' || metadata.report_source === 'Visualization') {
-    console.log("dashboard and visualization block entered");
+  if (
+    metadata.report_source === 'Dashboard' ||
+    metadata.report_source === 'Visualization'
+  ) {
+    await httpClient
+      .post('../api/reporting/generateReport', {
+        body: JSON.stringify(metadata),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      .then(async (response) => {
+        const fileFormat = extractFileFormat(response['filename']);
+        const fileName = response['filename'];
+        await readStreamToFile(await response['data'], fileFormat, fileName);
+        return response;
+      })
+      .catch((error) => {
+        console.log('error on generating report:', error);
+      });
+  } else if (metadata.report_source === 'Saved search') {
+    await httpClient
+      .post('../api/reporting/data-report/metadata', {
+        body: JSON.stringify(metadata['report_params']),
+      })
+      .then(async (response) => {
+        const format = response['metaData']['report_format'];
+        await httpClient
+          .get(`../api/reporting/data-report/generate/${response.report._id}`)
+          .then(async (response) => {
+            await dataReportToFile(format, response);
+          })
+          .catch((error) => {
+            console.log('error in second data report api:', error);
+          });
+      })
+      .catch((error) => {
+        console.log(
+          'error in creating saved search report off of definition:',
+          error
+        );
+      });
   }
-  else if (metadata.report_source === 'Saved search') {
-    console.log("saved search block");
-  }
-  return;
-  await httpClient
-    .post('../api/reporting/generateReport', {
-      body: JSON.stringify(metadata),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-    .then(async (response) => {
-      const fileFormat = extractFileFormat(response['filename']);
-      const fileName = response['filename'];
-      await readStreamToFile(await response['data'], fileFormat, fileName);
-      return response;
-    })
-    .catch((error) => {
-      console.log('error on generating report:', error);
-    });
 };
