@@ -20,9 +20,10 @@ import {
   ResponseError,
 } from '../../../../src/core/server';
 import { API_PREFIX } from '../../common';
-import { dataReportSchema } from '../model';
+import { dataReportSchema, reportSchema } from '../model';
 import { parseEsErrorResponse } from './utils/helpers';
 import { metaData, getSelectedFields } from './utils/dataReportHelpers';
+import { REPORT_STATE } from './utils/constants';
 const axios = require('axios');
 
 export default function (router: IRouter) {
@@ -41,23 +42,28 @@ export default function (router: IRouter) {
     ): Promise<IKibanaResponse<any | ResponseError>> => {
       // input validation
       try {
-        dataReportSchema.validate(request.body);
+        // dataReportSchema.validate(request.body);
+        reportSchema.validate(request.body)
       } catch (error) {
         return response.badRequest({ body: error });
       }
       try {
-        let dataReport = request.body;
-        metaData.saved_search_id = dataReport.saved_search_id;
-        metaData.report_format = dataReport.report_format;
-        metaData.start = dataReport.start;
-        metaData.end = dataReport.end;
+        let dataReport = {
+          ...request.body,
+          time_created: new Date().toISOString(),
+          state: REPORT_STATE.created,
+        }
+        metaData.saved_search_id = dataReport.report_params.saved_search_id;
+        metaData.report_format = dataReport.report_params.report_format;
+        metaData.start = dataReport.report_params.start;
+        metaData.end = dataReport.report_params.end;
         let resIndexPattern: any = {};
-
         //get the saved search infos
         const ssParams = {
           index: '.kibana',
-          id: 'search:' + dataReport.saved_search_id,
+          id: 'search:' + dataReport.report_params.saved_search_id,
         };
+        
 
         const ssInfos = await context.core.elasticsearch.adminClient.callAsInternalUser(
           'get',
@@ -100,7 +106,6 @@ export default function (router: IRouter) {
             }
           }
         }
-
         //save the meta data to the dataReport index to be updated with the right mapping
         const report = await context.core.elasticsearch.adminClient.callAsInternalUser(
           'index',
@@ -109,6 +114,13 @@ export default function (router: IRouter) {
             body: metaData,
           }
         );
+        const reportPostToSameIndex = await context.core.elasticsearch.adminClient.callAsInternalUser(
+          'index',
+          {
+            index: 'report',
+            body: dataReport
+          }
+        )
 
         return response.ok({
           body: { report, metaData },

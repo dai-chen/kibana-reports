@@ -147,7 +147,7 @@ export const generateReport = async (metadata, httpClient) => {
   } else if (metadata.report_source === 'Saved search') {
     await httpClient
       .post('../api/reporting/data-report/metadata', {
-        body: JSON.stringify(metadata['report_params']),
+        body: JSON.stringify(metadata),
       })
       .then(async (response) => {
         const format = response['metaData']['report_format'];
