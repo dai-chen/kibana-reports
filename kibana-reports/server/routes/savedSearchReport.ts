@@ -102,8 +102,7 @@ export default function(router: IRouter) {
         }
       }
 
-      /*
-      let report = metaData;
+      let report = { _source: metaData };
       let nbRows: number = 0;
       let scroll_size: number = 0;
 
@@ -389,12 +388,6 @@ export default function(router: IRouter) {
         );
         return esData;
       }
-      */
-
-      return response.custom({
-        statusCode: 200,
-        body: metaData,
-      });
     }
   );
 }
@@ -404,75 +397,8 @@ function exportCsv(
   request: KibanaRequest,
   response: KibanaResponse
 ) {
-  //createMetaData(context, request);
   return response.custom({
     statusCode: 200,
     body: 'No data in Elasticsearch.',
   });
 }
-
-/*
-function createMetaData(
-  context: RequestHandlerContext,
-  request: KibanaRequest
-) {
-  let dataReport = {
-    ...request.body,
-    time_created: new Date().toISOString(),
-    state: REPORT_STATE.created,
-  };
-  metaData.saved_search_id = dataReport.report_params.saved_search_id;
-  metaData.report_format = dataReport.report_params.report_format;
-  metaData.start = dataReport.report_params.start;
-  metaData.end = dataReport.report_params.end;
-  let resIndexPattern: any = {};
-  //get the saved search infos
-  const ssParams = {
-    index: '.kibana',
-    id: 'search:' + dataReport.report_params.saved_search_id,
-  };
-
-  const ssInfos = await context.core.elasticsearch.adminClient.callAsInternalUser(
-    'get',
-    ssParams
-  );
-
-  // get the sorting
-  metaData.sorting = ssInfos._source.search.sort;
-
-  // get the saved search type
-  metaData.type = ssInfos._source.type;
-
-  // get the filters
-  metaData.filters =
-    ssInfos._source.search.kibanaSavedObjectMeta.searchSourceJSON;
-
-  //get the list of selected columns in the saved search.Otherwise select all the fields under the _source
-  await getSelectedFields(ssInfos._source.search.columns);
-
-  //Get index name
-  for (let item of ssInfos._source.references) {
-    if (item.name === JSON.parse(metaData.filters).indexRefName) {
-      //Get index-pattern informations
-      const indexPattern = await context.core.elasticsearch.adminClient.callAsInternalUser(
-        'get',
-        {
-          index: '.kibana',
-          id: 'index-pattern:' + item.id,
-        }
-      );
-      resIndexPattern = indexPattern._source['index-pattern'];
-      metaData.paternName = resIndexPattern.title;
-      (metaData.timeFieldName = resIndexPattern.timeFieldName),
-        (metaData.fields = resIndexPattern.fields); //Get all fields
-      //Getting fields of type Date
-      for (let item of JSON.parse(metaData.fields)) {
-        if (item.type === 'date') {
-          metaData.dateFields.push(item.name);
-        }
-      }
-    }
-  }
-
-}
-*/
